@@ -14,6 +14,7 @@ type DayCard = {
 };
 
 const month = 'Marzo 2026';
+const apiBase = process.env.NEXT_PUBLIC_SPORT_API_BASE || 'https://sport-api.187.77.83.168.sslip.io';
 const dayCards: DayCard[] = [
   { day: 24, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
   { day: 25, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
@@ -76,6 +77,8 @@ const exercisePlaceholders = [
 export function SportDashboard() {
   const [selectedDay, setSelectedDay] = useState<DayCard>(dayCards.find((d) => d.day === 23 && (d.monthOffset ?? 0) === 0) || dayCards[0]);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [dbStatus, setDbStatus] = useState<'loading' | 'online' | 'offline'>('loading');
+  const [dbCounts, setDbCounts] = useState({ users: 0, workout_days: 0, workout_sessions: 0 });
 
   useEffect(() => {
     const stored = window.localStorage.getItem('neo-sport-theme');
@@ -89,6 +92,34 @@ export function SportDashboard() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem('neo-sport-theme', theme);
   }, [theme]);
+
+
+  useEffect(() => {
+    let active = true;
+
+    fetch(`${apiBase}/api/health`)
+      .then((res) => {
+        if (!res.ok) throw new Error('health failed');
+        return res.json();
+      })
+      .then((data) => {
+        if (!active) return;
+        setDbStatus('online');
+        setDbCounts({
+          users: data?.counts?.users ?? 0,
+          workout_days: data?.counts?.workout_days ?? 0,
+          workout_sessions: data?.counts?.workout_sessions ?? 0
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setDbStatus('offline');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedSummary = useMemo(() => {
     return {
@@ -116,21 +147,22 @@ export function SportDashboard() {
             <div>
               <p className="tiny-label">Vista general</p>
               <h2>Marzo 2026</h2>
+              <p className="live-status">{dbStatus === 'online' ? 'Base conectada' : dbStatus === 'offline' ? 'Base sin conexión' : 'Comprobando base...'}</p>
             </div>
             <span className="tiny-chip">Mobile first</span>
           </div>
           <div className="hero-metrics compact-metrics">
             <div>
-              <strong>4</strong>
+              <strong>{dbCounts.workout_sessions}</strong>
               <span>sesiones</span>
             </div>
             <div>
-              <strong>1</strong>
-              <span>hoy</span>
+              <strong>{dbCounts.workout_days}</strong>
+              <span>días</span>
             </div>
             <div>
-              <strong>DL</strong>
-              <span>tema</span>
+              <strong>{dbCounts.users}</strong>
+              <span>usuario</span>
             </div>
           </div>
         </div>
