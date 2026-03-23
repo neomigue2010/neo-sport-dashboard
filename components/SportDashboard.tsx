@@ -212,7 +212,7 @@ export function SportDashboard() {
     }
   }
 
-  async function saveExercise(index: number) {
+  async function saveExercise(index: number, silent = false) {
     const item = exerciseForms[index];
     setSavingExerciseIndex(index);
     try {
@@ -233,10 +233,10 @@ export function SportDashboard() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.message || 'No pude guardar el ejercicio');
-      setSessionStatus(`Ejercicio ${index + 1} guardado.`);
+      if (!silent) setSessionStatus(`Ejercicio ${index + 1} guardado.`);
       setDbCounts((cur) => ({ ...cur, workout_sessions: Math.max(cur.workout_sessions, 1) }));
     } catch (error) {
-      setSessionStatus(error instanceof Error ? error.message : 'No pude guardar el ejercicio');
+      if (!silent) setSessionStatus(error instanceof Error ? error.message : 'No pude guardar el ejercicio');
     } finally {
       setSavingExerciseIndex(null);
     }
@@ -245,6 +245,12 @@ export function SportDashboard() {
   async function completeSession() {
     setIsCompleting(true);
     try {
+      for (let index = 0; index < exerciseForms.length; index += 1) {
+        const item = exerciseForms[index];
+        if (!item.exerciseName.trim()) continue;
+        await saveExercise(index, true);
+      }
+
       const res = await fetch(`${apiBase}/api/session/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
