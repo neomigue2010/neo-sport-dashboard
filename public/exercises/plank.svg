@@ -1,0 +1,20 @@
+<svg width="1200" height="750" viewBox="0 0 1200 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="750" rx="36" fill="#0F172A"/>
+  <rect x="60" y="60" width="1080" height="630" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="80" y="120" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="42" font-weight="700">Plancha</text>
+  <text x="80" y="160" fill="#94A3B8" font-family="Arial, sans-serif" font-size="24">Cuerpo en línea recta · abdomen activo · cuello neutro</text>
+  <rect x="120" y="560" width="960" height="18" rx="9" fill="#475569"/>
+  <circle cx="360" cy="360" r="38" fill="#F8FAFC"/>
+  <line x1="394" y1="380" x2="590" y2="430" stroke="#F8FAFC" stroke-width="24" stroke-linecap="round"/>
+  <line x1="590" y1="430" x2="830" y2="420" stroke="#5EEAD4" stroke-width="24" stroke-linecap="round"/>
+  <line x1="450" y1="390" x2="390" y2="535" stroke="#A78BFA" stroke-width="22" stroke-linecap="round"/>
+  <line x1="390" y1="535" x2="340" y2="560" stroke="#A78BFA" stroke-width="22" stroke-linecap="round"/>
+  <line x1="830" y1="420" x2="930" y2="545" stroke="#A78BFA" stroke-width="24" stroke-linecap="round"/>
+  <line x1="830" y1="420" x2="950" y2="560" stroke="#A78BFA" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="340" cy="560" r="12" fill="#A78BFA"/>
+  <circle cx="950" cy="560" r="12" fill="#A78BFA"/>
+  <text x="625" y="388" fill="#99F6E4" font-family="Arial, sans-serif" font-size="22">tronco firme</text>
+  <text x="965" y="565" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="22">pies</text>
+  <text x="250" y="555" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="22">antebrazos</text>
+  <text x="80" y="650" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="22">Clave: evita que la cadera se caiga o suba demasiado.</text>
+</svg>

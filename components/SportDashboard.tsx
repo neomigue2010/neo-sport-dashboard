@@ -105,8 +105,8 @@ const EXERCISE_VISUALS: Record<string, { imageUrl: string; sourceName: string }>
     sourceName: 'Seated Leg Curl'
   },
   'Plancha': {
-    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg',
-    sourceName: 'Plank'
+    imageUrl: '/exercises/plank.svg',
+    sourceName: 'Neo visual'
   },
   'Remo sentado': {
     imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg',
@@ -145,8 +145,8 @@ const EXERCISE_VISUALS: Record<string, { imageUrl: string; sourceName: string }>
     sourceName: 'Seated Cable Rows'
   },
   'Dead bug': {
-    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg',
-    sourceName: 'Plank (placeholder visual)'
+    imageUrl: '/exercises/dead-bug.svg',
+    sourceName: 'Neo visual'
   },
   'Sentadilla guiada': {
     imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Smith_Machine_Bench_Press/0.jpg',

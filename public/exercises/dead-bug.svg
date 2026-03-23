@@ -1,0 +1,22 @@
+<svg width="1200" height="750" viewBox="0 0 1200 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="750" rx="36" fill="#0F172A"/>
+  <rect x="60" y="60" width="1080" height="630" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="80" y="120" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="42" font-weight="700">Dead Bug</text>
+  <text x="80" y="160" fill="#94A3B8" font-family="Arial, sans-serif" font-size="24">Pierna y brazo contrarios extendidos · zona lumbar estable</text>
+  <rect x="120" y="520" width="960" height="18" rx="9" fill="#475569"/>
+  <circle cx="560" cy="340" r="40" fill="#F8FAFC"/>
+  <line x1="560" y1="380" x2="560" y2="480" stroke="#F8FAFC" stroke-width="24" stroke-linecap="round"/>
+  <line x1="560" y1="405" x2="420" y2="325" stroke="#5EEAD4" stroke-width="22" stroke-linecap="round"/>
+  <line x1="560" y1="405" x2="710" y2="285" stroke="#A78BFA" stroke-width="22" stroke-linecap="round"/>
+  <line x1="560" y1="480" x2="430" y2="585" stroke="#A78BFA" stroke-width="24" stroke-linecap="round"/>
+  <line x1="560" y1="480" x2="690" y2="520" stroke="#5EEAD4" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="420" cy="325" r="14" fill="#5EEAD4"/>
+  <circle cx="710" cy="285" r="14" fill="#A78BFA"/>
+  <circle cx="430" cy="585" r="14" fill="#A78BFA"/>
+  <circle cx="690" cy="520" r="14" fill="#5EEAD4"/>
+  <text x="740" y="270" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="22">brazo derecho</text>
+  <text x="320" y="615" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="22">pierna izquierda</text>
+  <text x="330" y="300" fill="#99F6E4" font-family="Arial, sans-serif" font-size="22">brazo izquierdo</text>
+  <text x="720" y="545" fill="#99F6E4" font-family="Arial, sans-serif" font-size="22">pierna derecha</text>
+  <text x="80" y="650" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="22">Clave: no arquees la zona lumbar y mueve lento.</text>
+</svg>
