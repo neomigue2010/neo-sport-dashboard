@@ -28,6 +28,7 @@ const apiBase = process.env.NEXT_PUBLIC_SPORT_API_BASE || 'https://sport-api.187
 const selectedMonth = '2026-03';
 const monthNames = ['2026-02', '2026-03', '2026-04'];
 const monthLabels = ['feb', 'mar', 'abr'];
+const trainingWeekdays = new Set([1, 2, 4, 5]); // Mon, Tue, Thu, Fri
 
 const dayCards: DayCard[] = [
   { day: 23, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
@@ -236,12 +237,13 @@ export function SportDashboard() {
     return dayCards.map((card) => {
       const dateKey = getTrainingDate(card);
       const dbStatus = calendarStatusMap[dateKey];
-      if (!dbStatus) return card;
-
       if (dbStatus === 'done') return { ...card, status: 'done' as DayStatus, accent: 'done', label: 'Completado' };
       if (dbStatus === 'planned') return { ...card, status: 'planned' as DayStatus, accent: 'planned', label: 'Entreno' };
       if (dbStatus === 'rest' || dbStatus === 'skipped') return { ...card, status: 'rest' as DayStatus, accent: 'rest', label: 'Descanso' };
-      return card;
+
+      const weekday = new Date(`${dateKey}T12:00:00Z`).getUTCDay();
+      if (trainingWeekdays.has(weekday)) return { ...card, status: 'planned' as DayStatus, accent: 'planned', label: 'Entreno' };
+      return { ...card, status: 'rest' as DayStatus, accent: 'rest', label: 'Descanso' };
     });
   }, [calendarStatusMap]);
 
