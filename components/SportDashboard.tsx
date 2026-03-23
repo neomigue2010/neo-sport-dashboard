@@ -13,8 +13,19 @@ type DayCard = {
   accent: string;
 };
 
+type ExerciseForm = {
+  exerciseName: string;
+  reps: string;
+  weightKg: string;
+  difficulty: string;
+  notes: string;
+};
+
 const month = 'Marzo 2026';
 const apiBase = process.env.NEXT_PUBLIC_SPORT_API_BASE || 'https://sport-api.187.77.83.168.sslip.io';
+const selectedMonth = '2026-03';
+const monthNames = ['2026-02', '2026-03', '2026-04'];
+
 const dayCards: DayCard[] = [
   { day: 24, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
   { day: 25, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
@@ -59,6 +70,12 @@ const dayCards: DayCard[] = [
   { day: 5, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' }
 ];
 
+const initialExercises: ExerciseForm[] = [
+  { exerciseName: 'Calentamiento', reps: '', weightKg: '', difficulty: '', notes: '' },
+  { exerciseName: 'Ejercicio principal A', reps: '', weightKg: '', difficulty: '', notes: '' },
+  { exerciseName: 'Ejercicio principal B', reps: '', weightKg: '', difficulty: '', notes: '' }
+];
+
 const statusText: Record<DayStatus, string> = {
   planned: 'Preparado para asignar rutina',
   done: 'Entrenamiento archivado',
@@ -66,19 +83,28 @@ const statusText: Record<DayStatus, string> = {
   focus: 'Primer día de vuelta'
 };
 
-const exercisePlaceholders = [
-  'Bloque de calentamiento',
-  'Ejercicio principal A',
-  'Ejercicio principal B',
-  'Accesorio / core',
-  'Cierre y sensaciones'
-];
+function getTrainingDate(card: DayCard) {
+  const offset = card.monthOffset ?? 0;
+  const monthKey = monthNames[offset + 1] || selectedMonth;
+  return `${monthKey}-${String(card.day).padStart(2, '0')}`;
+}
 
 export function SportDashboard() {
   const [selectedDay, setSelectedDay] = useState<DayCard>(dayCards.find((d) => d.day === 23 && (d.monthOffset ?? 0) === 0) || dayCards[0]);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [dbStatus, setDbStatus] = useState<'loading' | 'online' | 'offline'>('loading');
   const [dbCounts, setDbCounts] = useState({ users: 0, workout_days: 0, workout_sessions: 0 });
+  const [sessionStatus, setSessionStatus] = useState('');
+  const [isSavingDay, setIsSavingDay] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState('');
+  const [perceivedEnergy, setPerceivedEnergy] = useState('');
+  const [perceivedEffort, setPerceivedEffort] = useState('');
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [exerciseForms, setExerciseForms] = useState<ExerciseForm[]>(initialExercises);
+  const [savingExerciseIndex, setSavingExerciseIndex] = useState<number | null>(null);
+
+  const trainingDate = useMemo(() => getTrainingDate(selectedDay), [selectedDay]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('neo-sport-theme');
@@ -93,10 +119,8 @@ export function SportDashboard() {
     window.localStorage.setItem('neo-sport-theme', theme);
   }, [theme]);
 
-
   useEffect(() => {
     let active = true;
-
     fetch(`${apiBase}/api/health`)
       .then((res) => {
         if (!res.ok) throw new Error('health failed');
@@ -115,19 +139,132 @@ export function SportDashboard() {
         if (!active) return;
         setDbStatus('offline');
       });
-
     return () => {
       active = false;
     };
   }, []);
 
-  const selectedSummary = useMemo(() => {
-    return {
-      title: selectedDay.status === 'done' ? 'Sesión cerrada' : selectedDay.status === 'rest' ? 'Día de recuperación' : 'Espacio de sesión',
-      subtitle: statusText[selectedDay.status],
-      cta: selectedDay.status === 'done' ? 'Ver detalles de la sesión' : 'Completar sesión aquí'
+  useEffect(() => {
+    let active = true;
+    setSessionStatus('');
+
+    fetch(`${apiBase}/api/session?user=migue&trainingDate=${trainingDate}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active || !data?.ok) return;
+        if (data.session) {
+          setDurationMinutes(data.session.duration_minutes ? String(data.session.duration_minutes) : '');
+          setPerceivedEnergy(data.session.perceived_energy ? String(data.session.perceived_energy) : '');
+          setPerceivedEffort(data.session.perceived_effort ? String(data.session.perceived_effort) : '');
+          setSessionNotes(data.session.notes || '');
+        } else {
+          setDurationMinutes('');
+          setPerceivedEnergy('');
+          setPerceivedEffort('');
+          setSessionNotes('');
+        }
+        if (Array.isArray(data.exercises) && data.exercises.length) {
+          const mapped = data.exercises.slice(0, 3).map((item: any) => ({
+            exerciseName: item.exercise_name || '',
+            reps: item.reps ? String(item.reps) : '',
+            weightKg: item.weight_kg ? String(item.weight_kg) : '',
+            difficulty: item.difficulty ? String(item.difficulty) : '',
+            notes: item.actual_notes || item.set_notes || ''
+          }));
+          while (mapped.length < 3) mapped.push({ exerciseName: `Ejercicio ${mapped.length + 1}`, reps: '', weightKg: '', difficulty: '', notes: '' });
+          setExerciseForms(mapped);
+        } else {
+          setExerciseForms(initialExercises);
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+      });
+
+    return () => {
+      active = false;
     };
-  }, [selectedDay]);
+  }, [trainingDate]);
+
+  const selectedSummary = useMemo(() => ({
+    title: selectedDay.status === 'done' ? 'Sesión cerrada' : selectedDay.status === 'rest' ? 'Día de recuperación' : 'Sesión editable',
+    subtitle: statusText[selectedDay.status],
+    cta: isCompleting ? 'Cerrando sesión...' : 'Completar sesión'
+  }), [selectedDay, isCompleting]);
+
+  async function ensureDay() {
+    setIsSavingDay(true);
+    try {
+      const res = await fetch(`${apiBase}/api/calendar/day`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: 'migue', trainingDate, status: 'planned' })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || 'No pude guardar el día');
+      setSessionStatus('Día guardado en la base.');
+    } catch (error) {
+      setSessionStatus(error instanceof Error ? error.message : 'No pude guardar el día');
+    } finally {
+      setIsSavingDay(false);
+    }
+  }
+
+  async function saveExercise(index: number) {
+    const item = exerciseForms[index];
+    setSavingExerciseIndex(index);
+    try {
+      const res = await fetch(`${apiBase}/api/session/exercise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: 'migue',
+          trainingDate,
+          exerciseName: item.exerciseName,
+          sortOrder: index,
+          difficulty: item.difficulty ? Number(item.difficulty) : null,
+          reps: item.reps ? Number(item.reps) : null,
+          weightKg: item.weightKg ? Number(item.weightKg) : null,
+          effort: item.difficulty ? Number(item.difficulty) : null,
+          actualNotes: item.notes || null
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || 'No pude guardar el ejercicio');
+      setSessionStatus(`Ejercicio ${index + 1} guardado.`);
+      setDbCounts((cur) => ({ ...cur, workout_sessions: Math.max(cur.workout_sessions, 1) }));
+    } catch (error) {
+      setSessionStatus(error instanceof Error ? error.message : 'No pude guardar el ejercicio');
+    } finally {
+      setSavingExerciseIndex(null);
+    }
+  }
+
+  async function completeSession() {
+    setIsCompleting(true);
+    try {
+      const res = await fetch(`${apiBase}/api/session/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: 'migue',
+          trainingDate,
+          durationMinutes: durationMinutes ? Number(durationMinutes) : null,
+          perceivedEnergy: perceivedEnergy ? Number(perceivedEnergy) : null,
+          perceivedEffort: perceivedEffort ? Number(perceivedEffort) : null,
+          notes: sessionNotes || null
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.message || 'No pude completar la sesión');
+      setSessionStatus('Sesión cerrada. Queda pendiente de análisis por Neo.');
+      setDbCounts((cur) => ({ ...cur, workout_days: cur.workout_days + 1 }));
+    } catch (error) {
+      setSessionStatus(error instanceof Error ? error.message : 'No pude completar la sesión');
+    } finally {
+      setIsCompleting(false);
+    }
+  }
 
   return (
     <main className="app-shell">
@@ -152,18 +289,9 @@ export function SportDashboard() {
             <span className="tiny-chip">Mobile first</span>
           </div>
           <div className="hero-metrics compact-metrics">
-            <div>
-              <strong>{dbCounts.workout_sessions}</strong>
-              <span>sesiones</span>
-            </div>
-            <div>
-              <strong>{dbCounts.workout_days}</strong>
-              <span>días</span>
-            </div>
-            <div>
-              <strong>{dbCounts.users}</strong>
-              <span>usuario</span>
-            </div>
+            <div><strong>{dbCounts.workout_sessions}</strong><span>sesiones</span></div>
+            <div><strong>{dbCounts.workout_days}</strong><span>días</span></div>
+            <div><strong>{dbCounts.users}</strong><span>usuario</span></div>
           </div>
         </div>
 
@@ -174,13 +302,11 @@ export function SportDashboard() {
                 <p className="tiny-label">Calendario</p>
                 <h3>{month}</h3>
               </div>
-              <span className="tiny-chip">Vista compacta</span>
+              <button className="tiny-action" onClick={ensureDay} disabled={isSavingDay}>{isSavingDay ? 'Guardando...' : 'Guardar día'}</button>
             </div>
 
             <div className="calendar-weekdays">
-              {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((item) => (
-                <span key={item}>{item}</span>
-              ))}
+              {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((item) => <span key={item}>{item}</span>)}
             </div>
 
             <div className="calendar-grid">
@@ -202,7 +328,7 @@ export function SportDashboard() {
             <div className="section-head">
               <div>
                 <p className="tiny-label">Sesión del día</p>
-                <h3>{selectedDay.day} {month}</h3>
+                <h3>{trainingDate}</h3>
               </div>
               <span className={`status-badge ${selectedDay.accent}`}>{selectedDay.label}</span>
             </div>
@@ -219,65 +345,35 @@ export function SportDashboard() {
               </div>
             </div>
 
+            <div className="session-form">
+              <label><span>Duración (min)</span><input value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" placeholder="45" /></label>
+              <label><span>Energía (1-10)</span><input value={perceivedEnergy} onChange={(e) => setPerceivedEnergy(e.target.value)} inputMode="numeric" placeholder="7" /></label>
+              <label><span>Esfuerzo global (1-10)</span><input value={perceivedEffort} onChange={(e) => setPerceivedEffort(e.target.value)} inputMode="numeric" placeholder="8" /></label>
+              <label className="full-field"><span>Notas de la sesión</span><textarea value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)} placeholder="Cómo te sentiste, molestias, cosas a vigilar..." /></label>
+            </div>
+
             <div className="exercise-list">
-              {exercisePlaceholders.map((item, index) => (
-                <div key={item} className="exercise-row">
-                  <div>
-                    <span className="index-pill">0{index + 1}</span>
-                    <div>
-                      <h5>{item}</h5>
-                      <p>Campo visual preparado para peso, repeticiones y dificultad 1-10.</p>
+              {exerciseForms.map((item, index) => (
+                <div key={index} className="exercise-card">
+                  <div className="exercise-head">
+                    <div className="exercise-head-left">
+                      <span className="index-pill">0{index + 1}</span>
+                      <input className="exercise-name-input" value={item.exerciseName} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, exerciseName: e.target.value } : entry))} />
                     </div>
+                    <button className="ghost-button" onClick={() => saveExercise(index)} disabled={savingExerciseIndex === index}>{savingExerciseIndex === index ? 'Guardando...' : 'Guardar'}</button>
                   </div>
-                  <button className="ghost-button">Abrir</button>
+                  <div className="exercise-fields">
+                    <label><span>Reps</span><input value={item.reps} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, reps: e.target.value } : entry))} inputMode="numeric" placeholder="10" /></label>
+                    <label><span>Peso (kg)</span><input value={item.weightKg} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, weightKg: e.target.value } : entry))} inputMode="decimal" placeholder="25" /></label>
+                    <label><span>Dificultad</span><input value={item.difficulty} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, difficulty: e.target.value } : entry))} inputMode="numeric" placeholder="7" /></label>
+                    <label className="full-field"><span>Notas</span><textarea value={item.notes} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, notes: e.target.value } : entry))} placeholder="Máquina, sensaciones, ajustes..." /></label>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <button className="primary-button full">{selectedSummary.cta}</button>
-          </article>
-        </section>
-
-        <section className="grid-stack secondary">
-          <article className="glass insight-card">
-            <div className="section-head compact">
-              <div>
-                <p className="tiny-label">Dashboard</p>
-                <h3>Estructura prevista</h3>
-              </div>
-            </div>
-            <div className="feature-stack">
-              {[
-                'Histórico por ejercicio y máquina',
-                'Sensación/RPE por serie o por ejercicio',
-                'Cierre de sesión para que Neo analice el día',
-                'Ajuste progresivo de la siguiente rutina'
-              ].map((item) => (
-                <div key={item} className="feature-tile">
-                  <span>✦</span>
-                  <p>{item}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="glass prompt-card minimal-card">
-            <div className="section-head compact">
-              <div>
-                <p className="tiny-label">Tema</p>
-                <h3>Preferencias visuales</h3>
-              </div>
-            </div>
-            <div className="theme-preview minimal-preview">
-              <div>
-                <span>Dark</span>
-                <strong>Activo</strong>
-              </div>
-              <div>
-                <span>Light</span>
-                <strong>Disponible</strong>
-              </div>
-            </div>
+            {sessionStatus ? <p className="session-status-message">{sessionStatus}</p> : null}
+            <button className="primary-button full" onClick={completeSession} disabled={isCompleting}>{selectedSummary.cta}</button>
           </article>
         </section>
       </section>
