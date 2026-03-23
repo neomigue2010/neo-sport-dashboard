@@ -25,7 +25,7 @@ async function getOrCreateDay(userId, trainingDate, status = 'planned') {
     `INSERT INTO workout_days (user_id, training_date, status)
      VALUES ($1, $2::date, $3)
      ON CONFLICT (user_id, training_date)
-     DO UPDATE SET updated_at = now()
+     DO UPDATE SET status = EXCLUDED.status, updated_at = now()
      RETURNING *`,
     [userId, trainingDate, status]
   );
@@ -37,11 +37,36 @@ async function getOrCreateSession(workoutDayId) {
   if (existing.rowCount) return existing.rows[0];
   const created = await pool.query(
     `INSERT INTO workout_sessions (workout_day_id, coach_summary)
-     VALUES ($1, 'PENDIENTE_NEO')
+     VALUES ($1, 'BORRADOR')
      RETURNING *`,
     [workoutDayId]
   );
   return created.rows[0];
+}
+
+async function fetchSessionBundleBySessionId(sessionId) {
+  const sessionResult = await pool.query(
+    `SELECT ws.*, wd.training_date, wd.status AS day_status, wd.focus, wd.notes AS day_notes, u.slug AS user_slug, u.display_name
+     FROM workout_sessions ws
+     JOIN workout_days wd ON wd.id = ws.workout_day_id
+     JOIN app_users u ON u.id = wd.user_id
+     WHERE ws.id = $1
+     LIMIT 1`,
+    [sessionId]
+  );
+  if (!sessionResult.rowCount) return null;
+
+  const session = sessionResult.rows[0];
+  const exerciseResult = await pool.query(
+    `SELECT wse.*, es.reps, es.weight_kg, es.effort AS set_effort, es.notes AS set_notes
+     FROM workout_session_exercises wse
+     LEFT JOIN exercise_sets es ON es.session_exercise_id = wse.id AND es.set_number = 1
+     WHERE wse.session_id = $1
+     ORDER BY wse.sort_order ASC`,
+    [sessionId]
+  );
+
+  return { session, exercises: exerciseResult.rows };
 }
 
 app.get('/api/health', async (_req, res) => {
@@ -164,32 +189,24 @@ app.post('/api/session/exercise', async (req, res) => {
     const day = await getOrCreateDay(userId, trainingDate, 'planned');
     const session = await getOrCreateSession(day.id);
 
-    const exerciseResult = await pool.query(
-      `INSERT INTO workout_session_exercises (
-         session_id, exercise_name, sort_order, target_sets, target_reps, target_notes, actual_notes, difficulty
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT DO NOTHING
-       RETURNING *`,
-      [session.id, exerciseName, sortOrder, targetSets, targetReps, targetNotes, actualNotes, difficulty]
-    );
-
-    let sessionExercise = exerciseResult.rows[0];
-    if (!sessionExercise) {
-      const existing = await pool.query(
-        `SELECT * FROM workout_session_exercises WHERE session_id = $1 AND sort_order = $2 LIMIT 1`,
-        [session.id, sortOrder]
-      );
-      sessionExercise = existing.rows[0];
-      sessionExercise = (
-        await pool.query(
-          `UPDATE workout_session_exercises
-           SET exercise_name = $2, target_sets = $3, target_reps = $4, target_notes = $5, actual_notes = $6, difficulty = $7, updated_at = now()
-           WHERE id = $1
-           RETURNING *`,
-          [sessionExercise.id, exerciseName, targetSets, targetReps, targetNotes, actualNotes, difficulty]
-        )
-      ).rows[0];
-    }
+    const sessionExercise = (
+      await pool.query(
+        `INSERT INTO workout_session_exercises (
+           session_id, exercise_name, sort_order, target_sets, target_reps, target_notes, actual_notes, difficulty
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (session_id, sort_order)
+         DO UPDATE SET
+           exercise_name = EXCLUDED.exercise_name,
+           target_sets = EXCLUDED.target_sets,
+           target_reps = EXCLUDED.target_reps,
+           target_notes = EXCLUDED.target_notes,
+           actual_notes = EXCLUDED.actual_notes,
+           difficulty = EXCLUDED.difficulty,
+           updated_at = now()
+         RETURNING *`,
+        [session.id, exerciseName, sortOrder, targetSets, targetReps, targetNotes, actualNotes, difficulty]
+      )
+    ).rows[0];
 
     const setResult = await pool.query(
       `INSERT INTO exercise_sets (session_exercise_id, set_number, reps, weight_kg, effort, notes)
@@ -252,6 +269,50 @@ app.post('/api/session/complete', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown error';
     res.status(message === 'user not found' ? 404 : 500).json({ ok: false, message });
+  }
+});
+
+app.get('/api/session/pending-analysis', async (req, res) => {
+  const user = String(req.query.user || 'migue');
+  try {
+    const result = await pool.query(
+      `SELECT ws.id
+       FROM workout_sessions ws
+       JOIN workout_days wd ON wd.id = ws.workout_day_id
+       JOIN app_users u ON u.id = wd.user_id
+       WHERE u.slug = $1
+         AND ws.coach_summary = 'PENDIENTE_NEO'
+         AND ws.completed_at IS NOT NULL
+       ORDER BY ws.completed_at DESC NULLS LAST, ws.updated_at DESC
+       LIMIT 1`,
+      [user]
+    );
+    if (!result.rowCount) return res.json({ ok: true, pending: false });
+    const bundle = await fetchSessionBundleBySessionId(result.rows[0].id);
+    res.json({ ok: true, pending: true, ...bundle });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown error';
+    res.status(500).json({ ok: false, message });
+  }
+});
+
+app.post('/api/session/mark-analyzed', async (req, res) => {
+  const { sessionId, summary = null } = req.body || {};
+  if (!sessionId) return res.status(400).json({ ok: false, message: 'sessionId is required' });
+  try {
+    const result = await pool.query(
+      `UPDATE workout_sessions
+       SET coach_summary = $2,
+           updated_at = now()
+       WHERE id = $1
+       RETURNING *`,
+      [sessionId, summary || `ANALYZED_BY_NEO:${new Date().toISOString()}`]
+    );
+    if (!result.rowCount) return res.status(404).json({ ok: false, message: 'session not found' });
+    res.json({ ok: true, session: result.rows[0] });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown error';
+    res.status(500).json({ ok: false, message });
   }
 });
 
