@@ -6,6 +6,7 @@ type DayStatus = 'planned' | 'done' | 'rest' | 'focus';
 
 type DayCard = {
   day: number;
+  monthOffset?: -1 | 0 | 1;
   status: DayStatus;
   label: string;
   energy: string;
@@ -14,13 +15,47 @@ type DayCard = {
 
 const month = 'Marzo 2026';
 const dayCards: DayCard[] = [
+  { day: 24, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
+  { day: 25, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
+  { day: 26, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
+  { day: 27, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
+  { day: 28, monthOffset: -1, status: 'done', label: 'Sesión anterior', energy: 'Referencia', accent: 'done' },
+  { day: 1, status: 'rest', label: 'Recuperación', energy: 'Reset', accent: 'rest' },
+  { day: 2, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 3, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 4, status: 'rest', label: 'Movilidad', energy: 'Ligero', accent: 'rest' },
+  { day: 5, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 6, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 7, status: 'rest', label: 'Movilidad', energy: 'Ligero', accent: 'rest' },
+  { day: 8, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 9, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 10, status: 'rest', label: 'Descanso', energy: 'Recuperar', accent: 'rest' },
+  { day: 11, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 12, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 13, status: 'rest', label: 'Descanso', energy: 'Recuperar', accent: 'rest' },
+  { day: 14, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 15, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 16, status: 'rest', label: 'Movilidad', energy: 'Ligero', accent: 'rest' },
+  { day: 17, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 18, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 19, status: 'rest', label: 'Descanso', energy: 'Recuperar', accent: 'rest' },
+  { day: 20, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 21, status: 'planned', label: 'Hueco libre', energy: 'Disponible', accent: 'planned' },
+  { day: 22, status: 'rest', label: 'Descarga', energy: 'Reset', accent: 'rest' },
   { day: 23, status: 'focus', label: 'Día activo', energy: 'Volver al sistema', accent: 'focus' },
   { day: 24, status: 'planned', label: 'Espacio listo', energy: 'Entreno futuro', accent: 'planned' },
   { day: 25, status: 'planned', label: 'Espacio listo', energy: 'Progresión', accent: 'planned' },
   { day: 26, status: 'rest', label: 'Descarga', energy: 'Movilidad / pausa', accent: 'rest' },
   { day: 27, status: 'planned', label: 'Espacio listo', energy: 'Fuerza ligera', accent: 'planned' },
   { day: 28, status: 'rest', label: 'Recuperación', energy: 'Reset', accent: 'rest' },
-  { day: 29, status: 'done', label: 'Mock completado', energy: 'Vista histórica', accent: 'done' }
+  { day: 29, status: 'done', label: 'Mock completado', energy: 'Vista histórica', accent: 'done' },
+  { day: 30, status: 'planned', label: 'Espacio listo', energy: 'Continuidad', accent: 'planned' },
+  { day: 31, status: 'planned', label: 'Espacio listo', energy: 'Continuidad', accent: 'planned' },
+  { day: 1, monthOffset: 1, status: 'planned', label: 'Próximo bloque', energy: 'Abril', accent: 'planned' },
+  { day: 2, monthOffset: 1, status: 'rest', label: 'Descarga', energy: 'Abril', accent: 'rest' },
+  { day: 3, monthOffset: 1, status: 'planned', label: 'Próximo bloque', energy: 'Abril', accent: 'planned' },
+  { day: 4, monthOffset: 1, status: 'planned', label: 'Próximo bloque', energy: 'Abril', accent: 'planned' },
+  { day: 5, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' }
 ];
 
 const statusText: Record<DayStatus, string> = {
@@ -39,7 +74,7 @@ const exercisePlaceholders = [
 ];
 
 export function SportDashboard() {
-  const [selectedDay, setSelectedDay] = useState<DayCard>(dayCards[0]);
+  const [selectedDay, setSelectedDay] = useState<DayCard>(dayCards.find((d) => d.day === 23 && (d.monthOffset ?? 0) === 0) || dayCards[0]);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
@@ -117,22 +152,17 @@ export function SportDashboard() {
             </div>
 
             <div className="calendar-grid">
-              {Array.from({ length: 35 }).map((_, index) => {
-                const day = index - 20;
-                const card = dayCards.find((entry) => entry.day === day);
-                if (!card) return <div key={index} className="calendar-empty" />;
-
-                return (
-                  <button
-                    key={card.day}
-                    className={`calendar-day ${card.accent} ${selectedDay.day === card.day ? 'active' : ''}`}
-                    onClick={() => setSelectedDay(card)}
-                  >
-                    <strong>{card.day}</strong>
-                    <small>{card.status === 'done' ? '✓' : card.status === 'rest' ? '—' : '•'}</small>
-                  </button>
-                );
-              })}
+              {dayCards.map((card, index) => (
+                <button
+                  key={`${card.monthOffset ?? 0}-${card.day}-${index}`}
+                  className={`calendar-day ${card.accent} ${(card.monthOffset ?? 0) !== 0 ? 'muted-day' : ''} ${selectedDay.day === card.day && (selectedDay.monthOffset ?? 0) === (card.monthOffset ?? 0) ? 'active' : ''}`}
+                  onClick={() => setSelectedDay(card)}
+                >
+                  <span className="calendar-dot">{card.status === 'done' ? '✓' : card.status === 'rest' ? '—' : '•'}</span>
+                  <strong>{card.day}</strong>
+                  <small>{(card.monthOffset ?? 0) === 0 ? 'mar' : card.monthOffset === -1 ? 'feb' : 'abr'}</small>
+                </button>
+              ))}
             </div>
           </article>
 

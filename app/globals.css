@@ -183,20 +183,22 @@ p { color: var(--muted); line-height: 1.55; }
   font-size: 12px;
   color: var(--muted);
 }
-.calendar-empty { min-height: 64px; }
 .calendar-day {
-  min-height: 72px;
-  border-radius: 18px;
-  padding: 10px 6px;
+  min-height: 82px;
+  border-radius: 20px;
+  padding: 10px 6px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid transparent;
+  border: 1px solid var(--line-strong);
+  background: rgba(255,255,255,0.04);
 }
-.calendar-day strong { font-size: 1.1rem; color: var(--text); }
-.calendar-day small { color: currentColor; }
-.calendar-day.active { outline: 2px solid var(--text); outline-offset: 2px; }
+.calendar-day strong { font-size: 1.18rem; color: var(--text); line-height: 1; }
+.calendar-day small { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.calendar-day.active { outline: 2px solid var(--text); outline-offset: 2px; transform: translateY(-1px); }
+.calendar-dot { font-size: 0.9rem; line-height: 1; opacity: 0.95; }
+.muted-day { opacity: 0.55; }
 
 .session-overview {
   display: grid;
