@@ -177,7 +177,7 @@ export function SportDashboard() {
         }
 
         if (Array.isArray(data.exercises) && data.exercises.length) {
-          const mapped = data.exercises.slice(0, 3).map((item: any) => ({
+          const mapped = data.exercises.slice(0, 5).map((item: any) => ({
             exerciseName: item.exercise_name || '',
             targetSets: item.target_sets ? String(item.target_sets) : '',
             targetReps: item.target_reps ? String(item.target_reps) : '',
