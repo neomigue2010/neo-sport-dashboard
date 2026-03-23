@@ -15,6 +15,7 @@ type DayCard = {
 
 type ExerciseForm = {
   exerciseName: string;
+  targetSets: string;
   reps: string;
   weightKg: string;
   difficulty: string;
@@ -71,9 +72,9 @@ const dayCards: DayCard[] = [
 ];
 
 const initialExercises: ExerciseForm[] = [
-  { exerciseName: 'Calentamiento', reps: '', weightKg: '', difficulty: '', notes: '' },
-  { exerciseName: 'Ejercicio principal A', reps: '', weightKg: '', difficulty: '', notes: '' },
-  { exerciseName: 'Ejercicio principal B', reps: '', weightKg: '', difficulty: '', notes: '' }
+  { exerciseName: 'Calentamiento', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' },
+  { exerciseName: 'Ejercicio principal A', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' },
+  { exerciseName: 'Ejercicio principal B', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' }
 ];
 
 const statusText: Record<DayStatus, string> = {
@@ -166,12 +167,13 @@ export function SportDashboard() {
         if (Array.isArray(data.exercises) && data.exercises.length) {
           const mapped = data.exercises.slice(0, 3).map((item: any) => ({
             exerciseName: item.exercise_name || '',
-            reps: item.reps ? String(item.reps) : '',
+            targetSets: item.target_sets ? String(item.target_sets) : '',
+            reps: item.target_reps ? String(item.target_reps) : (item.reps ? String(item.reps) : ''),
             weightKg: item.weight_kg ? String(item.weight_kg) : '',
             difficulty: item.difficulty ? String(item.difficulty) : '',
             notes: item.actual_notes || item.set_notes || ''
           }));
-          while (mapped.length < 3) mapped.push({ exerciseName: `Ejercicio ${mapped.length + 1}`, reps: '', weightKg: '', difficulty: '', notes: '' });
+          while (mapped.length < 3) mapped.push({ exerciseName: `Ejercicio ${mapped.length + 1}`, targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' });
           setExerciseForms(mapped);
         } else {
           setExerciseForms(initialExercises);
@@ -363,7 +365,8 @@ export function SportDashboard() {
                     <button className="ghost-button" onClick={() => saveExercise(index)} disabled={savingExerciseIndex === index}>{savingExerciseIndex === index ? 'Guardando...' : 'Guardar'}</button>
                   </div>
                   <div className="exercise-fields">
-                    <label><span>Reps</span><input value={item.reps} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, reps: e.target.value } : entry))} inputMode="numeric" placeholder="10" /></label>
+                    <label><span>Series</span><input value={item.targetSets} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, targetSets: e.target.value } : entry))} inputMode="numeric" placeholder="3" /></label>
+                    <label><span>Reps objetivo</span><input value={item.reps} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, reps: e.target.value } : entry))} inputMode="numeric" placeholder="10" /></label>
                     <label><span>Peso (kg)</span><input value={item.weightKg} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, weightKg: e.target.value } : entry))} inputMode="decimal" placeholder="25" /></label>
                     <label><span>Dificultad</span><input value={item.difficulty} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, difficulty: e.target.value } : entry))} inputMode="numeric" placeholder="7" /></label>
                     <label className="full-field"><span>Notas</span><textarea value={item.notes} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, notes: e.target.value } : entry))} placeholder="Máquina, sensaciones, ajustes..." /></label>
