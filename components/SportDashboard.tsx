@@ -29,6 +29,7 @@ const selectedMonth = '2026-03';
 const monthNames = ['2026-02', '2026-03', '2026-04'];
 
 const dayCards: DayCard[] = [
+  { day: 23, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
   { day: 24, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
   { day: 25, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
   { day: 26, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
@@ -69,7 +70,8 @@ const dayCards: DayCard[] = [
   { day: 2, monthOffset: 1, status: 'rest', label: 'Descarga', energy: 'Abril', accent: 'rest' },
   { day: 3, monthOffset: 1, status: 'planned', label: 'Próximo bloque', energy: 'Abril', accent: 'planned' },
   { day: 4, monthOffset: 1, status: 'planned', label: 'Próximo bloque', energy: 'Abril', accent: 'planned' },
-  { day: 5, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' }
+  { day: 5, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' },
+  { day: 6, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' }
 ];
 
 const emptyExercise = (): ExerciseForm => ({
@@ -107,7 +109,7 @@ export function SportDashboard() {
   const [perceivedEnergy, setPerceivedEnergy] = useState('');
   const [perceivedEffort, setPerceivedEffort] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
-  const [exerciseForms, setExerciseForms] = useState<ExerciseForm[]>([emptyExercise(), emptyExercise(), emptyExercise()]);
+  const [exerciseForms, setExerciseForms] = useState<ExerciseForm[]>([emptyExercise(), emptyExercise(), emptyExercise(), emptyExercise(), emptyExercise()]);
   const [savingExerciseIndex, setSavingExerciseIndex] = useState<number | null>(null);
 
   const trainingDate = useMemo(() => getTrainingDate(selectedDay), [selectedDay]);
@@ -184,10 +186,10 @@ export function SportDashboard() {
             difficulty: item.difficulty ? String(item.difficulty) : (item.set_effort ? String(item.set_effort) : ''),
             notes: item.actual_notes || item.set_notes || ''
           }));
-          while (mapped.length < 3) mapped.push(emptyExercise());
+          while (mapped.length < 5) mapped.push(emptyExercise());
           setExerciseForms(mapped);
         } else {
-          setExerciseForms([emptyExercise(), emptyExercise(), emptyExercise()]);
+          setExerciseForms([emptyExercise(), emptyExercise(), emptyExercise(), emptyExercise(), emptyExercise()]);
         }
       })
       .catch(() => {
