@@ -27,6 +27,7 @@ const month = 'Marzo 2026';
 const apiBase = process.env.NEXT_PUBLIC_SPORT_API_BASE || 'https://sport-api.187.77.83.168.sslip.io';
 const selectedMonth = '2026-03';
 const monthNames = ['2026-02', '2026-03', '2026-04'];
+const monthLabels = ['feb', 'mar', 'abr'];
 
 const dayCards: DayCard[] = [
   { day: 23, monthOffset: -1, status: 'rest', label: 'Cierre mes', energy: 'Descarga', accent: 'rest' },
@@ -102,6 +103,7 @@ export function SportDashboard() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [dbStatus, setDbStatus] = useState<'loading' | 'online' | 'offline'>('loading');
   const [dbCounts, setDbCounts] = useState({ users: 0, workout_days: 0, workout_sessions: 0 });
+  const [calendarStatusMap, setCalendarStatusMap] = useState<Record<string, string>>({});
   const [sessionStatus, setSessionStatus] = useState('');
   const [isSavingDay, setIsSavingDay] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -200,6 +202,48 @@ export function SportDashboard() {
       active = false;
     };
   }, [trainingDate]);
+
+
+  useEffect(() => {
+    let active = true;
+    Promise.all(
+      monthNames.map((monthKey) =>
+        fetch(`${apiBase}/api/calendar?user=migue&month=${monthKey}`)
+          .then((res) => (res.ok ? res.json() : { ok: false, days: [] }))
+          .catch(() => ({ ok: false, days: [] }))
+      )
+    ).then((results) => {
+      if (!active) return;
+      const next: Record<string, string> = {};
+      for (const result of results) {
+        if (!result?.ok || !Array.isArray(result.days)) continue;
+        for (const day of result.days) {
+          if (day?.training_date) {
+            const key = String(day.training_date).slice(0, 10);
+            next[key] = day.status;
+          }
+        }
+      }
+      setCalendarStatusMap(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+
+  const renderedDayCards = useMemo(() => {
+    return dayCards.map((card) => {
+      const dateKey = getTrainingDate(card);
+      const dbStatus = calendarStatusMap[dateKey];
+      if (!dbStatus) return card;
+
+      if (dbStatus === 'done') return { ...card, status: 'done' as DayStatus, accent: 'done', label: 'Completado' };
+      if (dbStatus === 'planned') return { ...card, status: 'planned' as DayStatus, accent: 'planned', label: 'Entreno' };
+      if (dbStatus === 'rest' || dbStatus === 'skipped') return { ...card, status: 'rest' as DayStatus, accent: 'rest', label: 'Descanso' };
+      return card;
+    });
+  }, [calendarStatusMap]);
 
   const selectedSummary = useMemo(() => ({
     title: selectedDay.status === 'done' ? 'Sesión cerrada' : selectedDay.status === 'rest' ? 'Día de recuperación' : 'Sesión editable',
@@ -335,7 +379,7 @@ export function SportDashboard() {
             </div>
 
             <div className="calendar-grid">
-              {dayCards.map((card, index) => (
+              {renderedDayCards.map((card, index) => (
                 <button
                   key={`${card.monthOffset ?? 0}-${card.day}-${index}`}
                   className={`calendar-day ${card.accent} ${(card.monthOffset ?? 0) !== 0 ? 'muted-day' : ''} ${selectedDay.day === card.day && (selectedDay.monthOffset ?? 0) === (card.monthOffset ?? 0) ? 'active' : ''}`}
@@ -343,7 +387,7 @@ export function SportDashboard() {
                 >
                   <span className="calendar-dot">{card.status === 'done' ? '✓' : card.status === 'rest' ? '—' : '•'}</span>
                   <strong>{card.day}</strong>
-                  <small>{(card.monthOffset ?? 0) === 0 ? 'mar' : card.monthOffset === -1 ? 'feb' : 'abr'}</small>
+                  <small>{monthLabels[(card.monthOffset ?? 0) + 1] || 'mar'}</small>
                 </button>
               ))}
             </div>
