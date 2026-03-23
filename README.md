@@ -14,3 +14,10 @@ MVP visual mobile-first para una futura app de entrenamiento conectada con Neo.
 - Rutinas dinámicas
 - Cierre de sesión + análisis de Neo
 - Historial por ejercicio
+
+
+## Base de datos (VPS)
+- Motor: PostgreSQL 16
+- Esquema SQL: `db/schema.sql`
+- Variables de entorno: `.env.example`
+- Health endpoint (si `DATABASE_URL` está configurada): `/api/health/db`
