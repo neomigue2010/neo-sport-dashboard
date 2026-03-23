@@ -125,6 +125,62 @@ p { color: var(--muted); line-height: 1.55; }
   gap: 16px;
 }
 
+.compact-hero {
+  gap: 12px;
+}
+
+.hero-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-title-row h2 {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+
+.minimal-card {
+  gap: 12px;
+}
+
+.minimal-preview {
+  margin-top: 0;
+}
+
+.minimal-preview div {
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.minimal-preview span {
+  margin-bottom: 6px;
+}
+
+.minimal-preview strong {
+  font-size: 1rem;
+}
+
+.compact-metrics div {
+  padding: 12px;
+}
+
+.compact-metrics strong {
+  font-size: 1.15rem;
+}
+
+.compact-metrics span {
+  font-size: 0.82rem;
+}
+
+@media (max-width: 520px) {
+  .hero-title-row {
+    flex-direction: column;
+  }
+}
+
 .pill,
 .tiny-chip,
 .status-badge,

@@ -111,26 +111,26 @@ export function SportDashboard() {
           </button>
         </div>
 
-        <div className="hero-card glass">
-          <div>
-            <span className="pill pill-accent">MVP base</span>
-            <h2>Una primera estructura para trabajar calendario, sesión y seguimiento.</h2>
+        <div className="hero-card glass compact-hero">
+          <div className="hero-title-row">
+            <div>
+              <p className="tiny-label">Vista general</p>
+              <h2>Marzo 2026</h2>
+            </div>
+            <span className="tiny-chip">Mobile first</span>
           </div>
-          <p>
-            Aquí no hay rutina metida todavía: solo una base clara para entrar, ver el día, rellenar ejercicios y cerrar la sesión.
-          </p>
-          <div className="hero-metrics">
+          <div className="hero-metrics compact-metrics">
             <div>
-              <strong>7</strong>
-              <span>días visibles</span>
+              <strong>4</strong>
+              <span>sesiones</span>
             </div>
             <div>
-              <strong>2</strong>
-              <span>temas visuales</span>
+              <strong>1</strong>
+              <span>hoy</span>
             </div>
             <div>
-              <strong>100%</strong>
-              <span>mobile first</span>
+              <strong>DL</strong>
+              <span>tema</span>
             </div>
           </div>
         </div>
@@ -229,20 +229,21 @@ export function SportDashboard() {
             </div>
           </article>
 
-          <article className="glass prompt-card">
-            <p className="tiny-label">Estética / dirección</p>
-            <h3>Diseño limpio, claro y cómodo desde móvil.</h3>
-            <p>
-              La idea es mantener una interfaz moderna y ordenada: bloques amplios, tipografía grande, buen contraste y navegación simple para usarla fácil al entrar al gym.
-            </p>
-            <div className="theme-preview">
+          <article className="glass prompt-card minimal-card">
+            <div className="section-head compact">
+              <div>
+                <p className="tiny-label">Tema</p>
+                <h3>Preferencias visuales</h3>
+              </div>
+            </div>
+            <div className="theme-preview minimal-preview">
               <div>
                 <span>Dark</span>
-                <strong>alto contraste</strong>
+                <strong>Activo</strong>
               </div>
               <div>
                 <span>Light</span>
-                <strong>limpio y claro</strong>
+                <strong>Disponible</strong>
               </div>
             </div>
           </article>
