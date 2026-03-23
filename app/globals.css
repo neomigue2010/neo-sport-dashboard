@@ -463,3 +463,26 @@ p { color: var(--muted); line-height: 1.55; }
 .field-spacer {
   min-height: 1px;
 }
+
+.exercise-visual {
+  margin-bottom: 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
+}
+
+.exercise-visual img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: rgba(255,255,255,0.02);
+}
+
+.exercise-visual span {
+  display: block;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}

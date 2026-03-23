@@ -86,6 +86,82 @@ const emptyExercise = (): ExerciseForm => ({
   notes: ''
 });
 
+
+const EXERCISE_VISUALS: Record<string, { imageUrl: string; sourceName: string }> = {
+  'Prensa de piernas': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg',
+    sourceName: 'Leg Press'
+  },
+  'Jalón al pecho': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Lat_Pulldown/0.jpg',
+    sourceName: 'Wide-Grip Lat Pulldown'
+  },
+  'Press pecho en máquina': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Bench_Press/0.jpg',
+    sourceName: 'Machine Bench Press'
+  },
+  'Curl femoral sentado': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Leg_Curl/0.jpg',
+    sourceName: 'Seated Leg Curl'
+  },
+  'Plancha': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg',
+    sourceName: 'Plank'
+  },
+  'Remo sentado': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg',
+    sourceName: 'Seated Cable Rows'
+  },
+  'Press hombro en máquina': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Shoulder_(Military)_Press/0.jpg',
+    sourceName: 'Machine Shoulder (Military) Press'
+  },
+  'Aperturas en máquina': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butterfly/0.jpg',
+    sourceName: 'Butterfly'
+  },
+  'Curl bíceps en máquina': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Bicep_Curl/0.jpg',
+    sourceName: 'Machine Bicep Curl'
+  },
+  'Extensión tríceps en polea': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown/0.jpg',
+    sourceName: 'Triceps Pushdown'
+  },
+  'Prensa inclinada': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg',
+    sourceName: 'Leg Press'
+  },
+  'Peso muerto rumano con mancuernas': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg',
+    sourceName: 'Romanian Deadlift'
+  },
+  'Jalón al pecho agarre neutro': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Front_Lat_Pulldown/0.jpg',
+    sourceName: 'Close-Grip Front Lat Pulldown'
+  },
+  'Remo bajo en polea': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg',
+    sourceName: 'Seated Cable Rows'
+  },
+  'Dead bug': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg',
+    sourceName: 'Plank (placeholder visual)'
+  },
+  'Sentadilla guiada': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Smith_Machine_Bench_Press/0.jpg',
+    sourceName: 'Smith Machine (placeholder visual)'
+  },
+  'Press pecho inclinado en máquina': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Bench_Press/0.jpg',
+    sourceName: 'Machine Bench Press'
+  },
+  'Elevaciones laterales': {
+    imageUrl: 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg',
+    sourceName: 'Side Lateral Raise'
+  }
+};
+
 const statusText: Record<DayStatus, string> = {
   planned: 'Preparado para asignar rutina',
   done: 'Entrenamiento archivado',
@@ -426,6 +502,12 @@ export function SportDashboard() {
             <div className="exercise-list">
               {exerciseForms.map((item, index) => (
                 <div key={index} className="exercise-card">
+                  {item.exerciseName && EXERCISE_VISUALS[item.exerciseName] ? (
+                    <div className="exercise-visual">
+                      <img src={EXERCISE_VISUALS[item.exerciseName].imageUrl} alt={item.exerciseName} />
+                      <span>Referencia visual · {EXERCISE_VISUALS[item.exerciseName].sourceName}</span>
+                    </div>
+                  ) : null}
                   <div className="exercise-head">
                     <div className="exercise-head-left">
                       <span className="index-pill">0{index + 1}</span>
