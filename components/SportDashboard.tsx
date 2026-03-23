@@ -113,11 +113,11 @@ export function SportDashboard() {
 
         <div className="hero-card glass">
           <div>
-            <span className="pill pill-accent">MVP estructura</span>
-            <h2>Una base visual para que calendario, sesión y seguimiento se sientan como producto real.</h2>
+            <span className="pill pill-accent">MVP base</span>
+            <h2>Una primera estructura para trabajar calendario, sesión y seguimiento.</h2>
           </div>
           <p>
-            Aquí no hay rutina metida todavía: solo la arquitectura UX para que tú entres, veas el día, rellenes ejercicios y luego yo pueda leer la sesión cerrada.
+            Aquí no hay rutina metida todavía: solo una base clara para entrar, ver el día, rellenar ejercicios y cerrar la sesión.
           </p>
           <div className="hero-metrics">
             <div>
@@ -211,7 +211,7 @@ export function SportDashboard() {
             <div className="section-head compact">
               <div>
                 <p className="tiny-label">Dashboard</p>
-                <h3>Secciones previstas</h3>
+                <h3>Estructura prevista</h3>
               </div>
             </div>
             <div className="feature-stack">
@@ -231,9 +231,9 @@ export function SportDashboard() {
 
           <article className="glass prompt-card">
             <p className="tiny-label">Estética / dirección</p>
-            <h3>Look limpio, premium y usable desde móvil.</h3>
+            <h3>Diseño limpio, claro y cómodo desde móvil.</h3>
             <p>
-              Mezcla de dashboard moderno + sensación fitness elegante: bloques amplios, tipografía grande, aire, contraste y navegación muy simple para que no dé pereza usarla al entrar al gym.
+              La idea es mantener una interfaz moderna y ordenada: bloques amplios, tipografía grande, buen contraste y navegación simple para usarla fácil al entrar al gym.
             </p>
             <div className="theme-preview">
               <div>
