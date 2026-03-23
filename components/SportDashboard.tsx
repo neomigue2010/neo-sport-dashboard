@@ -16,7 +16,8 @@ type DayCard = {
 type ExerciseForm = {
   exerciseName: string;
   targetSets: string;
-  reps: string;
+  targetReps: string;
+  actualReps: string;
   weightKg: string;
   difficulty: string;
   notes: string;
@@ -71,11 +72,15 @@ const dayCards: DayCard[] = [
   { day: 5, monthOffset: 1, status: 'rest', label: 'Descanso', energy: 'Abril', accent: 'rest' }
 ];
 
-const initialExercises: ExerciseForm[] = [
-  { exerciseName: 'Calentamiento', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' },
-  { exerciseName: 'Ejercicio principal A', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' },
-  { exerciseName: 'Ejercicio principal B', targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' }
-];
+const emptyExercise = (): ExerciseForm => ({
+  exerciseName: '',
+  targetSets: '',
+  targetReps: '',
+  actualReps: '',
+  weightKg: '',
+  difficulty: '',
+  notes: ''
+});
 
 const statusText: Record<DayStatus, string> = {
   planned: 'Preparado para asignar rutina',
@@ -102,10 +107,14 @@ export function SportDashboard() {
   const [perceivedEnergy, setPerceivedEnergy] = useState('');
   const [perceivedEffort, setPerceivedEffort] = useState('');
   const [sessionNotes, setSessionNotes] = useState('');
-  const [exerciseForms, setExerciseForms] = useState<ExerciseForm[]>(initialExercises);
+  const [exerciseForms, setExerciseForms] = useState<ExerciseForm[]>([emptyExercise(), emptyExercise(), emptyExercise()]);
   const [savingExerciseIndex, setSavingExerciseIndex] = useState<number | null>(null);
 
   const trainingDate = useMemo(() => getTrainingDate(selectedDay), [selectedDay]);
+
+  function updateExercise(index: number, patch: Partial<ExerciseForm>) {
+    setExerciseForms((current) => current.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
+  }
 
   useEffect(() => {
     const stored = window.localStorage.getItem('neo-sport-theme');
@@ -164,19 +173,21 @@ export function SportDashboard() {
           setPerceivedEffort('');
           setSessionNotes('');
         }
+
         if (Array.isArray(data.exercises) && data.exercises.length) {
           const mapped = data.exercises.slice(0, 3).map((item: any) => ({
             exerciseName: item.exercise_name || '',
             targetSets: item.target_sets ? String(item.target_sets) : '',
-            reps: item.target_reps ? String(item.target_reps) : (item.reps ? String(item.reps) : ''),
+            targetReps: item.target_reps ? String(item.target_reps) : '',
+            actualReps: item.reps ? String(item.reps) : '',
             weightKg: item.weight_kg ? String(item.weight_kg) : '',
-            difficulty: item.difficulty ? String(item.difficulty) : '',
+            difficulty: item.difficulty ? String(item.difficulty) : (item.set_effort ? String(item.set_effort) : ''),
             notes: item.actual_notes || item.set_notes || ''
           }));
-          while (mapped.length < 3) mapped.push({ exerciseName: `Ejercicio ${mapped.length + 1}`, targetSets: '', reps: '', weightKg: '', difficulty: '', notes: '' });
+          while (mapped.length < 3) mapped.push(emptyExercise());
           setExerciseForms(mapped);
         } else {
-          setExerciseForms(initialExercises);
+          setExerciseForms([emptyExercise(), emptyExercise(), emptyExercise()]);
         }
       })
       .catch(() => {
@@ -214,6 +225,7 @@ export function SportDashboard() {
 
   async function saveExercise(index: number, silent = false) {
     const item = exerciseForms[index];
+    if (!item.exerciseName.trim()) return;
     setSavingExerciseIndex(index);
     try {
       const res = await fetch(`${apiBase}/api/session/exercise`, {
@@ -224,8 +236,10 @@ export function SportDashboard() {
           trainingDate,
           exerciseName: item.exerciseName,
           sortOrder: index,
+          targetSets: item.targetSets ? Number(item.targetSets) : null,
+          targetReps: item.targetReps || null,
           difficulty: item.difficulty ? Number(item.difficulty) : null,
-          reps: item.reps ? Number(item.reps) : null,
+          reps: item.actualReps ? Number(item.actualReps) : null,
           weightKg: item.weightKg ? Number(item.weightKg) : null,
           effort: item.difficulty ? Number(item.difficulty) : null,
           actualNotes: item.notes || null
@@ -234,9 +248,9 @@ export function SportDashboard() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.message || 'No pude guardar el ejercicio');
       if (!silent) setSessionStatus(`Ejercicio ${index + 1} guardado.`);
-      setDbCounts((cur) => ({ ...cur, workout_sessions: Math.max(cur.workout_sessions, 1) }));
     } catch (error) {
       if (!silent) setSessionStatus(error instanceof Error ? error.message : 'No pude guardar el ejercicio');
+      throw error;
     } finally {
       setSavingExerciseIndex(null);
     }
@@ -245,9 +259,11 @@ export function SportDashboard() {
   async function completeSession() {
     setIsCompleting(true);
     try {
+      const validExercises = exerciseForms.filter((item) => item.exerciseName.trim());
+      if (!validExercises.length) throw new Error('No hay rutina cargada para completar esta sesión.');
+
       for (let index = 0; index < exerciseForms.length; index += 1) {
-        const item = exerciseForms[index];
-        if (!item.exerciseName.trim()) continue;
+        if (!exerciseForms[index].exerciseName.trim()) continue;
         await saveExercise(index, true);
       }
 
@@ -266,7 +282,6 @@ export function SportDashboard() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.message || 'No pude completar la sesión');
       setSessionStatus('Sesión cerrada. Queda pendiente de análisis por Neo.');
-      setDbCounts((cur) => ({ ...cur, workout_days: cur.workout_days + 1 }));
     } catch (error) {
       setSessionStatus(error instanceof Error ? error.message : 'No pude completar la sesión');
     } finally {
@@ -354,10 +369,10 @@ export function SportDashboard() {
             </div>
 
             <div className="session-form">
-              <label><span>Duración (min)</span><input value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" placeholder="45" /></label>
-              <label><span>Energía (1-10)</span><input value={perceivedEnergy} onChange={(e) => setPerceivedEnergy(e.target.value)} inputMode="numeric" placeholder="7" /></label>
-              <label><span>Esfuerzo global (1-10)</span><input value={perceivedEffort} onChange={(e) => setPerceivedEffort(e.target.value)} inputMode="numeric" placeholder="8" /></label>
-              <label className="full-field"><span>Notas de la sesión</span><textarea value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)} placeholder="Cómo te sentiste, molestias, cosas a vigilar..." /></label>
+              <label><span>Duración (min)</span><input aria-label="Duración" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" placeholder="45" /></label>
+              <label><span>Energía (1-10)</span><input aria-label="Energía" value={perceivedEnergy} onChange={(e) => setPerceivedEnergy(e.target.value)} inputMode="numeric" placeholder="7" /></label>
+              <label><span>Esfuerzo global (1-10)</span><input aria-label="Esfuerzo global" value={perceivedEffort} onChange={(e) => setPerceivedEffort(e.target.value)} inputMode="numeric" placeholder="8" /></label>
+              <label className="full-field"><span>Notas de la sesión</span><textarea aria-label="Notas de la sesión" value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)} placeholder="Cómo te sentiste, molestias, cosas a vigilar..." /></label>
             </div>
 
             <div className="exercise-list">
@@ -366,16 +381,32 @@ export function SportDashboard() {
                   <div className="exercise-head">
                     <div className="exercise-head-left">
                       <span className="index-pill">0{index + 1}</span>
-                      <input className="exercise-name-input" value={item.exerciseName} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, exerciseName: e.target.value } : entry))} />
+                      <input
+                        aria-label={`Nombre ejercicio ${index + 1}`}
+                        className="exercise-name-input"
+                        value={item.exerciseName}
+                        onChange={(e) => updateExercise(index, { exerciseName: e.target.value })}
+                        placeholder={`Ejercicio ${index + 1}`}
+                      />
                     </div>
-                    <button className="ghost-button" onClick={() => saveExercise(index)} disabled={savingExerciseIndex === index}>{savingExerciseIndex === index ? 'Guardando...' : 'Guardar'}</button>
+                    <button className="ghost-button" onClick={() => saveExercise(index)} disabled={savingExerciseIndex === index || !item.exerciseName.trim()}>
+                      {savingExerciseIndex === index ? 'Guardando...' : 'Guardar'}
+                    </button>
                   </div>
+
+                  <div className="exercise-section-label">Objetivo</div>
                   <div className="exercise-fields">
-                    <label><span>Series</span><input value={item.targetSets} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, targetSets: e.target.value } : entry))} inputMode="numeric" placeholder="3" /></label>
-                    <label><span>Reps objetivo</span><input value={item.reps} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, reps: e.target.value } : entry))} inputMode="numeric" placeholder="10" /></label>
-                    <label><span>Peso (kg)</span><input value={item.weightKg} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, weightKg: e.target.value } : entry))} inputMode="decimal" placeholder="25" /></label>
-                    <label><span>Dificultad</span><input value={item.difficulty} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, difficulty: e.target.value } : entry))} inputMode="numeric" placeholder="7" /></label>
-                    <label className="full-field"><span>Notas</span><textarea value={item.notes} onChange={(e) => setExerciseForms((cur) => cur.map((entry, i) => i === index ? { ...entry, notes: e.target.value } : entry))} placeholder="Máquina, sensaciones, ajustes..." /></label>
+                    <label><span>Series objetivo</span><input aria-label={`Series objetivo ${index + 1}`} value={item.targetSets} onChange={(e) => updateExercise(index, { targetSets: e.target.value })} inputMode="numeric" placeholder="3" /></label>
+                    <label><span>Reps objetivo</span><input aria-label={`Reps objetivo ${index + 1}`} value={item.targetReps} onChange={(e) => updateExercise(index, { targetReps: e.target.value })} inputMode="numeric" placeholder="10" /></label>
+                    <div className="field-spacer" />
+                  </div>
+
+                  <div className="exercise-section-label">Resultado real</div>
+                  <div className="exercise-fields">
+                    <label><span>Reps reales</span><input aria-label={`Reps reales ${index + 1}`} value={item.actualReps} onChange={(e) => updateExercise(index, { actualReps: e.target.value })} inputMode="numeric" placeholder="10" /></label>
+                    <label><span>Peso (kg)</span><input aria-label={`Peso ${index + 1}`} value={item.weightKg} onChange={(e) => updateExercise(index, { weightKg: e.target.value })} inputMode="decimal" placeholder="25" /></label>
+                    <label><span>Dificultad</span><input aria-label={`Dificultad ${index + 1}`} value={item.difficulty} onChange={(e) => updateExercise(index, { difficulty: e.target.value })} inputMode="numeric" placeholder="7" /></label>
+                    <label className="full-field"><span>Notas</span><textarea aria-label={`Notas ejercicio ${index + 1}`} value={item.notes} onChange={(e) => updateExercise(index, { notes: e.target.value })} placeholder="Máquina, sensaciones, ajustes..." /></label>
                   </div>
                 </div>
               ))}
